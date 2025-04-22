@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Telegram initData</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 15px; background-color: #f4f4f4; color: #333; }
+        #container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { color: #0088cc; }
+        label { font-weight: bold; display: block; margin-bottom: 5px; }
+        #initDataTextArea {
+            width: 98%;
+            min-height: 150px;
+            font-family: monospace;
+            font-size: 13px; /* Чуть крупнее для читаемости */
+            margin-top: 5px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: vertical; /* Позволить изменять размер по вертикали */
+            box-sizing: border-box; /* Учитывать padding и border в ширине */
+        }
+        button {
+             margin-top: 15px;
+             padding: 10px 18px;
+             background-color: #0088cc;
+             color: white;
+             border: none;
+             border-radius: 4px;
+             cursor: pointer;
+             font-size: 14px;
+         }
+        button:hover { background-color: #0077b3; }
+        #status, #error { margin-top: 10px; font-size: 14px; }
+        #status { color: green; }
+        #error { color: red; }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>Telegram InitData Viewer</h1>
+        <p>Your unique Telegram initData string will appear below. Copy it for testing.</p>
+
+        <div>
+            <label for="initDataTextArea">Telegram.WebApp.initData:</label>
+            <textarea id="initDataTextArea" readonly>Loading...</textarea>
+            <button onclick="copyInitData()">Copy to Clipboard</button>
+        </div>
+
+        <div id="status"></div>
+        <div id="error"></div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        const initDataTextArea = document.getElementById('initDataTextArea');
+        const statusDiv = document.getElementById('status');
+        const errorDiv = document.getElementById('error');
+
+        function copyInitData() {
+            if (!navigator.clipboard) {
+                // Резервный метод для старых браузеров/контекстов
+                initDataTextArea.select();
+                try {
+                    document.execCommand('copy');
+                    statusDiv.textContent = 'Copied!';
+                } catch (err) {
+                    errorDiv.textContent = 'Failed to copy. Please copy manually.';
+                }
+            } else {
+                // Современный API буфера обмена
+                navigator.clipboard.writeText(initDataTextArea.value).then(() => {
+                    statusDiv.textContent = 'Copied!';
+                }).catch(err => {
+                    errorDiv.textContent = 'Failed to copy. Please copy manually.';
+                    console.error('Async copy failed:', err);
+                });
+            }
+            setTimeout(() => { statusDiv.textContent = ''; errorDiv.textContent = ''; }, 3000);
+        }
+
+        function initialize() {
+            try {
+                tg.ready();
+                if (tg.initData) {
+                    initDataTextArea.value = tg.initData;
+                    console.log("initData captured:", tg.initData);
+                } else {
+                    initDataTextArea.value = 'Error: Telegram.WebApp.initData is empty.';
+                    errorDiv.textContent = 'Could not get initData. Ensure you open this via a Telegram bot.';
+                    console.error('Telegram.WebApp.initData is empty!');
+                }
+            } catch (e) {
+                 initDataTextArea.value = 'Error initializing Telegram WebApp.';
+                 errorDiv.textContent = `Initialization error: ${e.message}`;
+                 console.error('Initialization error:', e);
+            }
+        }
+
+        // Дожидаемся загрузки DOM перед инициализацией
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initialize);
+        } else {
+            initialize(); // DOM уже загружен
+        }
+    </script>
+</body>
+</html>
